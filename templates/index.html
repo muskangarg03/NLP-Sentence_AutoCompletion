@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autocomplete</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Style for suggestions */
+        .suggestion {
+    cursor: pointer;
+    display: inline-block;
+    padding: 8px 15px;
+    margin: 5px;
+    background-color: #8e01b1;
+    color: #fff;
+    border-radius: 5px;
+    font-weight: normal;
+    font-size:18px;
+    transition: background-color 0.3s ease;
+}
+
+.suggestion:hover {
+    background-color: #472252;
+}
+
+
+        /* Custom styles */
+        body {
+            background-color: #c2f1fc;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #000000;
+            color: #fff;
+            border-radius: 0;
+        }
+        .card-header.sen {
+            background-color: #4036f8;
+            color: #fff;
+            border-radius: 0;
+        }
+        .card-body {
+            padding: 30px;
+        }
+
+        .form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #020202;
+    font-size: 20px; 
+}
+
+.form-control {
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        #suggestions {
+            margin-top: 20px;
+
+    font-weight: bold;
+    color: #020202;
+    font-size: 20px; 
+
+        }
+
+        #autocompletedSentence {
+    margin-top: 25px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #05a048ee; 
+    border-radius: 5px;
+    padding: 10px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="mb-3 text-center"> NLP PROJECT</h1>
+                    </div>
+
+                    <div class="card-header sen my-2 text-center">
+                        <h3 class="mb-0">Sentence Autocompletion</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="inputSentence" class="form-label">Enter a sentence:</label>
+                            <input type="text" id="inputSentence" name="inputSentence" class="form-control">
+                        </div>
+                        
+                        <div id="suggestions"></div>
+                        <div id="autocompletedSentence"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#inputSentence').keypress(function (event) {
+                if (event.which === 13) {
+                    $('#autocompletedSentence').empty(); // Clear previous autocomplete sentence
+                    var inputSentence = $('#inputSentence').val();
+                    $.ajax({
+                        type: "POST",
+                        url: "/autocomplete",
+                        data: {input_sentence: inputSentence},
+                        success: function (response) {
+                            var suggestions = response.suggestions;
+                            var suggestionsHtml = "<p>Suggestions:</p><ul>";
+                            suggestions.forEach(function (suggestion) {
+                                suggestionsHtml += "<li class='suggestion'>" + suggestion + "</li>";
+                            });
+                            suggestionsHtml += "</ul>";
+                            $('#suggestions').html(suggestionsHtml);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error:', error);
+                        }
+                    });
+                }
+            });
+    
+            // Handle click event on suggested words
+            $(document).on('click', '.suggestion', function () {
+                var selectedWord = $(this).text();
+                var inputSentence = $('#inputSentence').val();
+                var completedSentence = inputSentence + " " + selectedWord;
+                $('#inputSentence').val(completedSentence);
+                $('#suggestions').html('');
+                
+                // Call the autocomplete_sentence function
+                $.ajax({
+                    type: "POST",
+                    url: "/autocomplete_sentence",
+                    data: {input_sentence: completedSentence},
+                    success: function (response) {
+                        var autocompletedSentence = response.autocompleted_sentence;
+                        $('#autocompletedSentence').text(autocompletedSentence);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
